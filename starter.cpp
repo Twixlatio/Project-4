@@ -1,6 +1,11 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
+// ifdef is a compiler flag, to control when the compiler will include specific lines of code
+// in this case, we are going to import windows headers only on windows systems
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 // color code constants https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 // backgrounds
@@ -23,7 +28,7 @@ const std::string QUEEN = "q ";
 const std::string KING = "k ";
 const std::string PAWN = "p ";
 const std::string BK_ROOK = "R ";
-const std::string BK_KNIGHT = "n ";
+const std::string BK_KNIGHT = "N ";
 const std::string BK_BISHOP = "B ";
 const std::string BK_QUEEN = "Q ";
 const std::string BK_KING = "K ";
@@ -154,19 +159,17 @@ public:
 // so all gamePiece implemenentations can access this object
 static BoardManager boardManager;
 
-// represents a imaginary piece called a "Plusser"
-// this is an example demonstrating how you could implement a real chess piece
-class Plusser : public IGamePiece {
+class Pawn : public IGamePiece {
 public:
   std::string getName() override {
     std::string color = isWhite ? "White " : "Black ";
-    return color + "Plusser";
+    return color + "Pawn";
   }
   std::string render() override {
     if (isWhite) {
-      return "⚔ "; // use a different symbol for each color
+      return PAWN; // use a different symbol for each color
     } else {
-      return "+ ";
+      return BK_PAWN;
     }
   }
   virtual std::vector<Position> getPotentialMoves() override {
@@ -182,19 +185,277 @@ public:
   }
 };
 
+class Rook : public IGamePiece {
+public:
+  std::string getName() override {
+    std::string color = isWhite ? "White " : "Black ";
+    return color + "Rook";
+  }
+  std::string render() override {
+    if (isWhite) {
+      return ROOK; // use a different symbol for each color
+    } else {
+      return BK_ROOK;
+    }
+  }
+  virtual std::vector<Position> getPotentialMoves() override {
+    std::vector<Position> moves;
+    // Rook can move as many squares as it likes horizontally or vertically as long as its not blocked by an occupied square
+    int potentialMoves[28][2] = {{position.x - 7, position.y}, {position.x - 6, position.y}, {position.x - 5, position.y}, {position.x - 4, position.y}, {position.x - 3, position.y}, {position.x - 2, position.y}, {position.x - 1, position.y},
+                                 {position.x + 1, position.y}, {position.x + 2, position.y}, {position.x + 3, position.y}, {position.x + 4, position.y}, {position.x + 5, position.y}, {position.x + 6, position.y}, {position.x + 7, position.y},
+                                 {position.x, position.y+1}, {position.x, position.y+2}, {position.x, position.y+3}, {position.x, position.y+4}, {position.x, position.y+5}, {position.x, position.y+6}, {position.x, position.y+7},
+                                 {position.x, position.y-1}, {position.x, position.y-2}, {position.x, position.y-3}, {position.x, position.y-4}, {position.x, position.y-5}, {position.x, position.y-6}, {position.x, position.y-7}};
+
+    for(int i = 0; i<7; i++)
+    {
+      // this if statement prevents moves jumping off the board at least
+      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
+        moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+      else
+        break;
+    }
+    for(int i = 7; i<14; i++)
+    {
+      // this if statement prevents moves jumping off the board at least
+      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
+        moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+      else
+        break;
+    }
+    for(int i = 14; i<21; i++)
+    {
+      // this if statement prevents moves jumping off the board at least
+      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
+        moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+      else
+        break;
+    }
+    for(int i = 21; i<28; i++)
+    {
+      // this if statement prevents moves jumping off the board at least
+      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
+        moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+      else
+        break;
+    }
+    // does not have logic to prevent moves attacking own pieces
+    // does not have any logic to prevent moves jumping off the board... could cause a crash.
+    return moves;
+  }
+};
+
+class Knight : public IGamePiece {
+public:
+  std::string getName() override {
+    std::string color = isWhite ? "White " : "Black ";
+    return color + "Knight";
+  }
+  std::string render() override {
+    if (isWhite) {
+      return KNIGHT; // use a different symbol for each color
+    } else {
+      return BK_KNIGHT;
+    }
+  }
+  virtual std::vector<Position> getPotentialMoves() override {
+    std::vector<Position> moves;
+    // add potential moves
+    moves.push_back(Position(position.x + 1, position.y));
+    moves.push_back(Position(position.x - 1, position.y));
+    moves.push_back(Position(position.x, position.y + 1));
+    moves.push_back(Position(position.x, position.y - 1));
+    // does not have logic to prevent moves attacking own pieces
+    // does not have any logic to prevent moves jumping off the board... could cause a crash.
+    return moves;
+  }
+};
+
+class Bishop : public IGamePiece {
+public:
+  std::string getName() override {
+    std::string color = isWhite ? "White " : "Black ";
+    return color + "Bishop";
+  }
+  std::string render() override {
+    if (isWhite) {
+      return BISHOP; // use a different symbol for each color
+    } else {
+      return BK_BISHOP;
+    }
+  }
+  virtual std::vector<Position> getPotentialMoves() override {
+    std::vector<Position> moves;
+    // add potential moves
+    moves.push_back(Position(position.x + 1, position.y));
+    moves.push_back(Position(position.x - 1, position.y));
+    moves.push_back(Position(position.x, position.y + 1));
+    moves.push_back(Position(position.x, position.y - 1));
+    // does not have logic to prevent moves attacking own pieces
+    // does not have any logic to prevent moves jumping off the board... could cause a crash.
+    return moves;
+  }
+};
+
+class Queen : public IGamePiece {
+public:
+  std::string getName() override {
+    std::string color = isWhite ? "White " : "Black ";
+    return color + "Queen";
+  }
+  std::string render() override {
+    if (isWhite) {
+      return QUEEN; // use a different symbol for each color
+    } else {
+      return BK_QUEEN;
+    }
+  }
+  virtual std::vector<Position> getPotentialMoves() override {
+    std::vector<Position> moves;
+    // add potential moves
+    moves.push_back(Position(position.x + 1, position.y));
+    moves.push_back(Position(position.x - 1, position.y));
+    moves.push_back(Position(position.x, position.y + 1));
+    moves.push_back(Position(position.x, position.y - 1));
+    // does not have logic to prevent moves attacking own pieces
+    // does not have any logic to prevent moves jumping off the board... could cause a crash.
+    return moves;
+  }
+};
+
+class King : public IGamePiece {
+public:
+  std::string getName() override {
+    std::string color = isWhite ? "White " : "Black ";
+    return color + "King";
+  }
+  std::string render() override {
+    if (isWhite) {
+      return KING; // use a different symbol for each color
+    } else {
+      return BK_KING;
+    }
+  }
+  virtual std::vector<Position> getPotentialMoves() override {
+    std::vector<Position> moves;
+    // King can move one square at any time, in any direction it wants
+    int potentialMoves[9][2] = {{position.x - 1, position.y+1}, {position.x, position.y+1}, {position.x + 1, position.y+1},
+                                {position.x - 1, position.y}, {position.x, position.y}, {position.x + 1, position.y},
+                                {position.x - 1, position.y-1}, {position.x, position.y-1}, {position.x + 1, position.y-1}};
+    // Preventing moves attacking own pieces and king
+    std::string whiteCannotAttack[6] = {"White Pawn", "White Knight", "White Bishop", "White Rook", "White Queen", "Black King"};
+    std::string blackCannotAttack[6] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black Queen", "White King"};
+    bool valid = true;
+
+    for(int i = 0; i<9; i++)
+    {
+      // this if statement prevents moves jumping off the board at least
+      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
+      {
+        valid = true;
+        if(isWhite)
+        {
+          for(int j = 0; j<6; j++)
+          {
+            if(boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1])->getName() == whiteCannotAttack[j])
+            {
+              valid = false;
+              break;
+            }
+          }
+          if(valid)
+            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+        }
+        else
+        {
+          for(int j = 0; j<6; j++)
+          {
+            if(boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1])->getName() == blackCannotAttack[j])
+            {
+              valid = false;
+              break;
+            }
+          }
+          if(valid)
+            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+        }
+      }
+    }
+    // does not have logic to prevent moves attacking own pieces
+
+    /* Need to use this function to pinpoint if there is a game piece there and prevent attacking own pieces 
+    // getAtPosition returns a pointer to the IGamePiece located at the specified position on the board
+    IGamePiece *const getAtPosition(int row, int col) {
+      return board[row][col];
+    }
+    */
+    // does not have any logic to prevent moves jumping off the board... could cause a crash.
+    return moves;
+  }
+};
+
 // Implement prepareBoard *after* declaring all pieces so they can be referenced here and placed on the board
 void BoardManager::prepareBoard() {
   // create an 8x8 chessboard defaulting to null pointers of IGamePiece objects
   board = std::vector<std::vector<IGamePiece *>>(8, std::vector<IGamePiece *>(8, nullptr));
   // TODO add pieces to the board here
-  board[4][4] = new Plusser(); // example imaginary piece (defaults to black)
-  board[3][2] = new Plusser(); // example imaginary piece (white)
-  board[3][2]->isWhite = true;
+
+  // board[col][row]
+  board[0][0] = new Rook();
+  std::cout << boardManager.getAtPosition(0, 0)->getName() << std::endl; // used to check what piece it is 
+  std::cout << boardManager.getAtPosition(0, 0) << std::endl; // used to check if a piece is there
+  std::cout << boardManager.getAtPosition(3, 0) << std::endl; // use to check if a piece is not there
+  board[0][0]->isWhite = false;
+  //board[1][0] = new Knight();
+  //board[1][0]->isWhite = false;
+  board[2][0] = new Bishop();
+  board[2][0]->isWhite = false;
+  board[3][0] = new Queen();
+  board[3][0]->isWhite = false;
+  board[4][0] = new King();
+  board[4][0]->isWhite = false;
+  board[5][0] = new Bishop();
+  board[5][0]->isWhite = false;
+  board[6][0] = new Knight();
+  board[6][0]->isWhite = false;
+  board[7][0] = new Rook();
+  board[7][0]->isWhite = false;
+  // for(int i = 0; i<8; i++)
+  // {
+  //   board[i][1] = new Pawn();
+  //   board[i][1]->isWhite = false;
+  // }
+
+  board[0][7] = new Rook();
+  board[0][7]->isWhite = true;
+  board[1][7] = new Knight();
+  board[1][7]->isWhite = true;
+  board[2][7] = new Bishop();
+  board[2][7]->isWhite = true;
+  board[3][7] = new Queen();
+  board[3][7]->isWhite = true;
+  board[4][7] = new King();
+  board[4][7]->isWhite = true;
+  board[5][7] = new Bishop();
+  board[5][7]->isWhite = true;
+  board[6][7] = new Knight();
+  board[6][7]->isWhite = true;
+  board[7][7] = new Rook();
+  board[7][7]->isWhite = true;
+
+  for(int i = 0; i<8; i++)
+  {
+    board[i][6] = new Pawn();
+    board[i][6]->isWhite = true;
+  }
 }
 
 // you shouldnt need to modify main(), but you are free to change it if you want
 int main() {
-  system("stty raw -echo"); // Disable line buffering and echo
+#ifndef _WIN32              // the next line only runs on non-windows systems
+  system("stty raw -echo"); // Disable line buffering and echo on linux/macos
+#else
+  SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT)); // disable line buffering and echo on windows
+#endif
   printf("\033[?25l");      // hide the cursor
   printf("\033[?1049h");    // use alternate screen buffer
   // populate terminal before starting...
