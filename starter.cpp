@@ -153,6 +153,20 @@ public:
   }
 
   // you may want to add more helper functionality here, such as checking if the a position is valid on the board
+  bool checkValid(int x, int y, std::string piecesThatCannotAttack[], int size)
+  {
+    bool valid = true;
+    for(int j = 0; j<size; j++)
+    {
+      if(getAtPosition(x, y)->getName() == piecesThatCannotAttack[j])
+      {
+        valid = false;
+        break;
+      }
+    }
+    return valid;
+  }
+
 };
 
 // declare global static boardManager for easy access anywhere
@@ -206,40 +220,134 @@ public:
                                  {position.x, position.y+1}, {position.x, position.y+2}, {position.x, position.y+3}, {position.x, position.y+4}, {position.x, position.y+5}, {position.x, position.y+6}, {position.x, position.y+7},
                                  {position.x, position.y-1}, {position.x, position.y-2}, {position.x, position.y-3}, {position.x, position.y-4}, {position.x, position.y-5}, {position.x, position.y-6}, {position.x, position.y-7}};
 
+    std::string whiteCannotAttack[7] = {"White Pawn", "White Knight", "White Bishop", "White Rook", "White King", "White Queen", "Black King"};
+    std::string blackCannotAttack[7] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black King", "Black Queen", "White King"};
+    bool valid = false;
+
+    // Checking possible positions to the left of the rook horizontally
     for(int i = 0; i<7; i++)
     {
-      // this if statement prevents moves jumping off the board at least
-      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
+      // if move is not outside the board
+      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
+      {
+        valid = true;
+        // if this piece is white and the move is occupied by another piece
+        if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+        {
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 7);
+          if(valid)
+            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+          break;
+        }
+        // if this piece is black and the move is occupied by another piece
+        else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+        {
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 7);
+          if(valid)
+            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+          break;
+        }
+      }
+
+      if(valid)
         moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-      else
-        break;
     }
     for(int i = 7; i<14; i++)
     {
-      // this if statement prevents moves jumping off the board at least
-      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
+      // if move is not outside the board
+      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
+      {
+        valid = true;
+        // if this piece is white and the move is occupied by another piece
+        if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+        {
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 7);
+          if(valid)
+            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+          break;
+        }
+        // if this piece is black and the move is occupied by another piece
+        else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+        {
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 7);
+          if(valid)
+            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+          break;
+        }
+      }
+
+      if(valid)
         moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-      else
-        break;
+      // // this if statement prevents moves jumping off the board at least
+      // if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
+      //   moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+      // else
+      //   break;
     }
     for(int i = 14; i<21; i++)
     {
-      // this if statement prevents moves jumping off the board at least
-      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
+      // if move is not outside the board
+      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
+      {
+        valid = true;
+        // if this piece is white and the move is occupied by another piece
+        if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+        {
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 7);
+          if(valid)
+            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+          break;
+        }
+        // if this piece is black and the move is occupied by another piece
+        else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+        {
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 7);
+          if(valid)
+            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+          break;
+        }
+      }
+
+      if(valid)
         moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-      else
-        break;
+      // // this if statement prevents moves jumping off the board at least
+      // if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
+      //   moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+      // else
+      //   break;
     }
     for(int i = 21; i<28; i++)
     {
-      // this if statement prevents moves jumping off the board at least
-      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
+      // if move is not outside the board
+      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
+      {
+        valid = true;
+        // if this piece is white and the move is occupied by another piece
+        if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+        {
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 7);
+          if(valid)
+            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+          break;
+        }
+        // if this piece is black and the move is occupied by another piece
+        else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+        {
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 7);
+          if(valid)
+            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+          break;
+        }
+      }
+
+      if(valid)
         moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-      else
-        break;
+      // this if statement prevents moves jumping off the board at least
+      // if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
+      //   moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+      // else
+      //   break;
     }
-    // does not have logic to prevent moves attacking own pieces
-    // does not have any logic to prevent moves jumping off the board... could cause a crash.
     return moves;
   }
 };
@@ -344,51 +452,26 @@ public:
     // Preventing moves attacking own pieces and king
     std::string whiteCannotAttack[6] = {"White Pawn", "White Knight", "White Bishop", "White Rook", "White Queen", "Black King"};
     std::string blackCannotAttack[6] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black Queen", "White King"};
-    bool valid = true;
+    bool valid = false;
 
     for(int i = 0; i<9; i++)
     {
-      // this if statement prevents moves jumping off the board at least
+      // if move is not outside the board
       if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
       {
-        valid = true;
-        if(isWhite)
-        {
-          for(int j = 0; j<6; j++)
-          {
-            if(boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1])->getName() == whiteCannotAttack[j])
-            {
-              valid = false;
-              break;
-            }
-          }
-          if(valid)
-            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-        }
-        else
-        {
-          for(int j = 0; j<6; j++)
-          {
-            if(boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1])->getName() == blackCannotAttack[j])
-            {
-              valid = false;
-              break;
-            }
-          }
-          if(valid)
-            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-        }
+        valid = true; // default valid for moves to empty square
+        // if this piece is white and the move is occupied by another piece
+        if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 6);
+        // if this piece is black and the move is occupied by another piece
+        else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 6);
       }
-    }
-    // does not have logic to prevent moves attacking own pieces
 
-    /* Need to use this function to pinpoint if there is a game piece there and prevent attacking own pieces 
-    // getAtPosition returns a pointer to the IGamePiece located at the specified position on the board
-    IGamePiece *const getAtPosition(int row, int col) {
-      return board[row][col];
+      if(valid)
+        moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
     }
-    */
-    // does not have any logic to prevent moves jumping off the board... could cause a crash.
+
     return moves;
   }
 };
