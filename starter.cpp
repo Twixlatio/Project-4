@@ -174,6 +174,8 @@ public:
 static BoardManager boardManager;
 
 class Pawn : public IGamePiece {
+private:
+  bool firstMove = true;
 public:
   std::string getName() override {
     std::string color = isWhite ? "White " : "Black ";
@@ -188,13 +190,65 @@ public:
   }
   virtual std::vector<Position> getPotentialMoves() override {
     std::vector<Position> moves;
-    // add potential moves
-    moves.push_back(Position(position.x + 1, position.y));
-    moves.push_back(Position(position.x - 1, position.y));
-    moves.push_back(Position(position.x, position.y + 1));
-    moves.push_back(Position(position.x, position.y - 1));
-    // does not have logic to prevent moves attacking own pieces
-    // does not have any logic to prevent moves jumping off the board... could cause a crash.
+    int whitePotentialMoves[4][2] = {{position.x, position.y - 2}, {position.x, position.y - 1}, {position.x - 1, position.y - 1}, {position.x + 1, position.y - 1}};
+    int blackPotentialMoves[4][2] = {{position.x, position.y + 2}, {position.x, position.y + 1}, {position.x - 1, position.y + 1}, {position.x + 1, position.y + 1}};
+
+    std::string whiteCannotAttack[7] = {"White Pawn", "White Knight", "White Bishop", "White Rook", "White King", "White Queen", "Black King"};
+    std::string blackCannotAttack[7] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black King", "Black Queen", "White King"};
+    bool valid = false;
+
+    for(int i = 0; i<4; i++)
+    {
+      if(isWhite && whitePotentialMoves[i][0] >= 0 && whitePotentialMoves[i][0] <= 7 && whitePotentialMoves[i][1] >= 0 && whitePotentialMoves[i][1] <= 7)
+      {
+        if(firstMove && i==0)
+        {
+          valid = true;
+          if(boardManager.getAtPosition(whitePotentialMoves[i][0], whitePotentialMoves[i][1]) != 0)
+            valid = boardManager.checkValid(whitePotentialMoves[i][0], whitePotentialMoves[i][1], whiteCannotAttack, 7);
+          
+          firstMove = false;
+        }
+        else if(!firstMove && i==0)
+          valid = false;
+        else if(boardManager.getAtPosition(whitePotentialMoves[i][0], whitePotentialMoves[i][1]) != 0)
+          valid = boardManager.checkValid(whitePotentialMoves[i][0], whitePotentialMoves[i][1], whiteCannotAttack, 7);
+        else if(boardManager.getAtPosition(whitePotentialMoves[i][0], whitePotentialMoves[i][1]) == 0)
+        {
+          if(i==2 || i==3)
+            valid = false;
+          else
+            valid = true;
+        }
+      }
+      else if(!isWhite && blackPotentialMoves[i][0] >= 0 && blackPotentialMoves[i][0] <= 7 && blackPotentialMoves[i][1] >= 0 && blackPotentialMoves[i][1] <= 7)
+      {
+        if(firstMove && i==0)
+        {
+          valid = true;
+          if(boardManager.getAtPosition(blackPotentialMoves[i][0], blackPotentialMoves[i][1]) != 0)
+            valid = boardManager.checkValid(blackPotentialMoves[i][0], blackPotentialMoves[i][1], blackCannotAttack, 7);
+          
+          firstMove = false;
+        }
+        else if(!firstMove && i==0)
+          valid = false;
+        else if(boardManager.getAtPosition(blackPotentialMoves[i][0], blackPotentialMoves[i][1]) != 0)
+          valid = boardManager.checkValid(blackPotentialMoves[i][0], blackPotentialMoves[i][1], blackCannotAttack, 7);
+        else if(boardManager.getAtPosition(blackPotentialMoves[i][0], blackPotentialMoves[i][1]) == 0)
+        {
+          if(i==2 || i==3)
+            valid = false;
+          else
+            valid = true;
+        }
+      }
+
+      if(isWhite && valid)
+        moves.push_back(Position(whitePotentialMoves[i][0], whitePotentialMoves[i][1]));
+      else if(!isWhite && valid)
+        moves.push_back(Position(blackPotentialMoves[i][0], blackPotentialMoves[i][1]));
+    }
     return moves;
   }
 };
@@ -215,7 +269,7 @@ public:
   virtual std::vector<Position> getPotentialMoves() override {
     std::vector<Position> moves;
     // Rook can move as many squares as it likes horizontally or vertically as long as its not blocked by an occupied square
-    int potentialMoves[28][2] = {{position.x - 7, position.y}, {position.x - 6, position.y}, {position.x - 5, position.y}, {position.x - 4, position.y}, {position.x - 3, position.y}, {position.x - 2, position.y}, {position.x - 1, position.y},
+    int potentialMoves[28][2] = {{position.x - 1, position.y}, {position.x - 2, position.y}, {position.x - 3, position.y}, {position.x - 4, position.y}, {position.x - 5, position.y}, {position.x - 6, position.y}, {position.x - 7, position.y},
                                  {position.x + 1, position.y}, {position.x + 2, position.y}, {position.x + 3, position.y}, {position.x + 4, position.y}, {position.x + 5, position.y}, {position.x + 6, position.y}, {position.x + 7, position.y},
                                  {position.x, position.y+1}, {position.x, position.y+2}, {position.x, position.y+3}, {position.x, position.y+4}, {position.x, position.y+5}, {position.x, position.y+6}, {position.x, position.y+7},
                                  {position.x, position.y-1}, {position.x, position.y-2}, {position.x, position.y-3}, {position.x, position.y-4}, {position.x, position.y-5}, {position.x, position.y-6}, {position.x, position.y-7}};
@@ -224,129 +278,36 @@ public:
     std::string blackCannotAttack[7] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black King", "Black Queen", "White King"};
     bool valid = false;
 
-    // Checking possible positions to the left of the rook horizontally
-    for(int i = 0; i<7; i++)
+    // Checking possible positions to the left, right, top, and bottom of the rook horizontally
+    for(int j = 0; j<4; j++)
     {
-      // if move is not outside the board
-      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
+      for(int i = 7*j; i<28; i++)
       {
-        valid = true;
-        // if this piece is white and the move is occupied by another piece
-        if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+        // if move is not outside the board
+        if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
         {
-          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 7);
-          if(valid)
-            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-          break;
+          valid = true;
+          // if this piece is white and the move is occupied by another piece
+          if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+          {
+            valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 7);
+            if(valid)
+              moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+            break;
+          }
+          // if this piece is black and the move is occupied by another piece
+          else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+          {
+            valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 7);
+            if(valid)
+              moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+            break;
+          }
         }
-        // if this piece is black and the move is occupied by another piece
-        else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
-        {
-          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 7);
-          if(valid)
-            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-          break;
-        }
-      }
 
-      if(valid)
-        moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-    }
-    for(int i = 7; i<14; i++)
-    {
-      // if move is not outside the board
-      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
-      {
-        valid = true;
-        // if this piece is white and the move is occupied by another piece
-        if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
-        {
-          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 7);
-          if(valid)
-            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-          break;
-        }
-        // if this piece is black and the move is occupied by another piece
-        else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
-        {
-          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 7);
-          if(valid)
-            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-          break;
-        }
+        if(valid)
+          moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
       }
-
-      if(valid)
-        moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-      // // this if statement prevents moves jumping off the board at least
-      // if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
-      //   moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-      // else
-      //   break;
-    }
-    for(int i = 14; i<21; i++)
-    {
-      // if move is not outside the board
-      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
-      {
-        valid = true;
-        // if this piece is white and the move is occupied by another piece
-        if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
-        {
-          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 7);
-          if(valid)
-            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-          break;
-        }
-        // if this piece is black and the move is occupied by another piece
-        else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
-        {
-          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 7);
-          if(valid)
-            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-          break;
-        }
-      }
-
-      if(valid)
-        moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-      // // this if statement prevents moves jumping off the board at least
-      // if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
-      //   moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-      // else
-      //   break;
-    }
-    for(int i = 21; i<28; i++)
-    {
-      // if move is not outside the board
-      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
-      {
-        valid = true;
-        // if this piece is white and the move is occupied by another piece
-        if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
-        {
-          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 7);
-          if(valid)
-            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-          break;
-        }
-        // if this piece is black and the move is occupied by another piece
-        else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
-        {
-          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 7);
-          if(valid)
-            moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-          break;
-        }
-      }
-
-      if(valid)
-        moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-      // this if statement prevents moves jumping off the board at least
-      // if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7 && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) == 0)
-      //   moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
-      // else
-      //   break;
     }
     return moves;
   }
@@ -367,13 +328,32 @@ public:
   }
   virtual std::vector<Position> getPotentialMoves() override {
     std::vector<Position> moves;
-    // add potential moves
-    moves.push_back(Position(position.x + 1, position.y));
-    moves.push_back(Position(position.x - 1, position.y));
-    moves.push_back(Position(position.x, position.y + 1));
-    moves.push_back(Position(position.x, position.y - 1));
-    // does not have logic to prevent moves attacking own pieces
-    // does not have any logic to prevent moves jumping off the board... could cause a crash.
+    // King can move one square at any time, in any direction it wants
+    int potentialMoves[8][2] = {{position.x - 2, position.y + 1}, {position.x - 1, position.y + 2}, {position.x + 1, position.y + 2}, {position.x + 2, position.y + 1},
+                                {position.x - 2, position.y - 1}, {position.x - 1, position.y - 2}, {position.x + 1, position.y - 2}, {position.x + 2, position.y - 1}};
+    // Preventing moves attacking own pieces and king
+    std::string whiteCannotAttack[7] = {"White Pawn", "White Knight", "White Bishop", "White Rook", "White King", "White Queen", "Black King"};
+    std::string blackCannotAttack[7] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black King", "Black Queen", "White King"};
+    bool valid = false;
+
+    for(int i = 0; i<8; i++)
+    {
+      // if move is not outside the board
+      if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
+      {
+        valid = true; // default valid for moves to empty square
+        // if this piece is white and the move is occupied by another piece
+        if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 6);
+        // if this piece is black and the move is occupied by another piece
+        else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+          valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 6);
+      }
+
+      if(valid)
+        moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+    }
+
     return moves;
   }
 };
@@ -393,13 +373,47 @@ public:
   }
   virtual std::vector<Position> getPotentialMoves() override {
     std::vector<Position> moves;
-    // add potential moves
-    moves.push_back(Position(position.x + 1, position.y));
-    moves.push_back(Position(position.x - 1, position.y));
-    moves.push_back(Position(position.x, position.y + 1));
-    moves.push_back(Position(position.x, position.y - 1));
-    // does not have logic to prevent moves attacking own pieces
-    // does not have any logic to prevent moves jumping off the board... could cause a crash.
+    // Rook can move as many squares as it likes horizontally or vertically as long as its not blocked by an occupied square
+    int potentialMoves[28][2] = {{position.x - 1, position.y + 1}, {position.x - 2, position.y + 2}, {position.x - 3, position.y + 3}, {position.x - 4, position.y + 4}, {position.x - 5, position.y + 5}, {position.x - 6, position.y + 6}, {position.x - 7, position.y + 7},
+                                 {position.x - 1, position.y - 1}, {position.x - 2, position.y - 2}, {position.x - 3, position.y - 3}, {position.x - 4, position.y - 4}, {position.x - 5, position.y - 5}, {position.x - 6, position.y - 6}, {position.x - 7, position.y - 7},
+                                 {position.x + 1, position.y + 1}, {position.x + 2, position.y + 2}, {position.x + 3, position.y + 3}, {position.x + 4, position.y + 4}, {position.x + 5, position.y + 5}, {position.x + 6, position.y + 6}, {position.x + 7, position.y + 7},
+                                 {position.x + 1, position.y - 1}, {position.x + 2, position.y - 2}, {position.x + 3, position.y - 3}, {position.x + 4, position.y - 4}, {position.x + 5, position.y - 5}, {position.x + 6, position.y - 6}, {position.x + 7, position.y - 7}};
+
+    std::string whiteCannotAttack[7] = {"White Pawn", "White Knight", "White Bishop", "White Rook", "White King", "White Queen", "Black King"};
+    std::string blackCannotAttack[7] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black King", "Black Queen", "White King"};
+    bool valid = false;
+
+    // Checking possible positions to the left, right, top, and bottom of the rook horizontally
+    for(int j = 0; j<4; j++)
+    {
+      for(int i = 7*j; i<28; i++)
+      {
+        // if move is not outside the board
+        if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
+        {
+          valid = true; // default so any empty spots will be a valid move
+          // if this piece is white and the move is occupied by another piece
+          if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+          {
+            valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 7);
+            if(valid)
+              moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+            break;
+          }
+          // if this piece is black and the move is occupied by another piece
+          else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+          {
+            valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 7);
+            if(valid)
+              moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+            break;
+          }
+        }
+
+        if(valid)
+          moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+      }
+    }
     return moves;
   }
 };
@@ -419,13 +433,51 @@ public:
   }
   virtual std::vector<Position> getPotentialMoves() override {
     std::vector<Position> moves;
-    // add potential moves
-    moves.push_back(Position(position.x + 1, position.y));
-    moves.push_back(Position(position.x - 1, position.y));
-    moves.push_back(Position(position.x, position.y + 1));
-    moves.push_back(Position(position.x, position.y - 1));
-    // does not have logic to prevent moves attacking own pieces
-    // does not have any logic to prevent moves jumping off the board... could cause a crash.
+    // Rook can move as many squares as it likes horizontally or vertically as long as its not blocked by an occupied square
+    int potentialMoves[56][2] = {{position.x - 1, position.y + 1}, {position.x - 2, position.y + 2}, {position.x - 3, position.y + 3}, {position.x - 4, position.y + 4}, {position.x - 5, position.y + 5}, {position.x - 6, position.y + 6}, {position.x - 7, position.y + 7},
+                                 {position.x - 1, position.y - 1}, {position.x - 2, position.y - 2}, {position.x - 3, position.y - 3}, {position.x - 4, position.y - 4}, {position.x - 5, position.y - 5}, {position.x - 6, position.y - 6}, {position.x - 7, position.y - 7},
+                                 {position.x + 1, position.y + 1}, {position.x + 2, position.y + 2}, {position.x + 3, position.y + 3}, {position.x + 4, position.y + 4}, {position.x + 5, position.y + 5}, {position.x + 6, position.y + 6}, {position.x + 7, position.y + 7},
+                                 {position.x + 1, position.y - 1}, {position.x + 2, position.y - 2}, {position.x + 3, position.y - 3}, {position.x + 4, position.y - 4}, {position.x + 5, position.y - 5}, {position.x + 6, position.y - 6}, {position.x + 7, position.y - 7},
+                                 {position.x - 1, position.y}, {position.x - 2, position.y}, {position.x - 3, position.y}, {position.x - 4, position.y}, {position.x - 5, position.y}, {position.x - 6, position.y}, {position.x - 7, position.y},
+                                 {position.x + 1, position.y}, {position.x + 2, position.y}, {position.x + 3, position.y}, {position.x + 4, position.y}, {position.x + 5, position.y}, {position.x + 6, position.y}, {position.x + 7, position.y},
+                                 {position.x, position.y+1}, {position.x, position.y+2}, {position.x, position.y+3}, {position.x, position.y+4}, {position.x, position.y+5}, {position.x, position.y+6}, {position.x, position.y+7},
+                                 {position.x, position.y-1}, {position.x, position.y-2}, {position.x, position.y-3}, {position.x, position.y-4}, {position.x, position.y-5}, {position.x, position.y-6}, {position.x, position.y-7}};
+
+    std::string whiteCannotAttack[7] = {"White Pawn", "White Knight", "White Bishop", "White Rook", "White King", "White Queen", "Black King"};
+    std::string blackCannotAttack[7] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black King", "Black Queen", "White King"};
+    bool valid = false;
+
+    // Checking possible positions to the left, right, top, and bottom of the rook horizontally
+    for(int j = 0; j<8; j++)
+    {
+      for(int i = 7*j; i<56; i++)
+      {
+        // if move is not outside the board
+        if(potentialMoves[i][0] >= 0 && potentialMoves[i][0] <= 7 && potentialMoves[i][1] >= 0 && potentialMoves[i][1] <= 7)
+        {
+          valid = true; // default so any empty spots will be a valid move
+          // if this piece is white and the move is occupied by another piece
+          if(isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+          {
+            valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], whiteCannotAttack, 7);
+            if(valid)
+              moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+            break;
+          }
+          // if this piece is black and the move is occupied by another piece
+          else if(!isWhite && boardManager.getAtPosition(potentialMoves[i][0], potentialMoves[i][1]) != 0)
+          {
+            valid = boardManager.checkValid(potentialMoves[i][0], potentialMoves[i][1], blackCannotAttack, 7);
+            if(valid)
+              moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+            break;
+          }
+        }
+
+        if(valid)
+          moves.push_back(Position(potentialMoves[i][0], potentialMoves[i][1]));
+      }
+    }
     return moves;
   }
 };
@@ -484,12 +536,12 @@ void BoardManager::prepareBoard() {
 
   // board[col][row]
   board[0][0] = new Rook();
-  std::cout << boardManager.getAtPosition(0, 0)->getName() << std::endl; // used to check what piece it is 
-  std::cout << boardManager.getAtPosition(0, 0) << std::endl; // used to check if a piece is there
-  std::cout << boardManager.getAtPosition(3, 0) << std::endl; // use to check if a piece is not there
+  // std::cout << boardManager.getAtPosition(0, 0)->getName() << std::endl; // used to check what piece it is 
+  // std::cout << boardManager.getAtPosition(0, 0) << std::endl; // used to check if a piece is there
+  // std::cout << boardManager.getAtPosition(3, 0) << std::endl; // use to check if a piece is not there
   board[0][0]->isWhite = false;
-  //board[1][0] = new Knight();
-  //board[1][0]->isWhite = false;
+  board[1][0] = new Knight();
+  board[1][0]->isWhite = false;
   board[2][0] = new Bishop();
   board[2][0]->isWhite = false;
   board[3][0] = new Queen();
@@ -502,11 +554,11 @@ void BoardManager::prepareBoard() {
   board[6][0]->isWhite = false;
   board[7][0] = new Rook();
   board[7][0]->isWhite = false;
-  // for(int i = 0; i<8; i++)
-  // {
-  //   board[i][1] = new Pawn();
-  //   board[i][1]->isWhite = false;
-  // }
+  for(int i = 0; i<8; i++)
+  {
+    board[i][1] = new Pawn();
+    board[i][1]->isWhite = false;
+  }
 
   board[0][7] = new Rook();
   board[0][7]->isWhite = true;
