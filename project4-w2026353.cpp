@@ -62,8 +62,9 @@ struct Position {
 // all chess pieces inherit from this class
 class IGamePiece {
 public:
-  // isWhite is a boolean to track what team the piece belongs to
+  // firstMove is a boolean to track if it is a gamepiece's first move
   bool firstMove = true;
+  // isWhite is a boolean to track what team the piece belongs to
   bool isWhite = false;
   // position represents the piece coordinates on the game board
   // this position will be updated by main() after every board update
@@ -136,6 +137,7 @@ public:
     for (auto &move : piece->getPotentialMoves()) {
       if (move.x == target.x && move.y == target.y) {
         isValidMove = true;
+        // if the piece is a pawn and its their first move then set firstMove to false
         if((piece->getName() == "White Pawn" || piece->getName() == "Black Pawn") && piece->firstMove == true)
         {
           piece->firstMove = false;
@@ -178,6 +180,7 @@ public:
 // so all gamePiece implemenentations can access this object
 static BoardManager boardManager;
 
+// For the pawn gamepiece
 class Pawn : public IGamePiece {
 public:
   bool getFirstMove()
@@ -203,15 +206,17 @@ public:
   }
   virtual std::vector<Position> getPotentialMoves() override {
     std::vector<Position> moves;
+    // Pawn can move forward once or twice (if first move) to an unoccupied spot and can attack forward diagonally to the left or right one spot
     int whitePotentialMoves[4][2] = {{position.x, position.y - 2}, {position.x, position.y - 1}, {position.x - 1, position.y - 1}, {position.x + 1, position.y - 1}};
     int blackPotentialMoves[4][2] = {{position.x, position.y + 2}, {position.x, position.y + 1}, {position.x - 1, position.y + 1}, {position.x + 1, position.y + 1}};
-
+    // Preventing moves attacking own pieces and king
     std::string whiteCannotAttack[7] = {"White Pawn", "White Knight", "White Bishop", "White Rook", "White King", "White Queen", "Black King"};
     std::string blackCannotAttack[7] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black King", "Black Queen", "White King"};
     bool valid = false;
 
     for(int i = 0; i<4; i++)
     {
+      // if the gamepiece is white and the current move is within the range of the board
       if(isWhite && whitePotentialMoves[i][0] >= 0 && whitePotentialMoves[i][0] <= 7 && whitePotentialMoves[i][1] >= 0 && whitePotentialMoves[i][1] <= 7)
       {
         if(firstMove && i==0)
@@ -220,26 +225,28 @@ public:
           // if spot is occupied then cannot move there
           if(boardManager.getAtPosition(whitePotentialMoves[i][0], whitePotentialMoves[i][1]) != 0)
             valid = false;
-          // else 
-          //   valid = boardManager.checkValid(whitePotentialMoves[i][0], whitePotentialMoves[i][1], whiteCannotAttack, 7);
         }
-        else if(!firstMove && i==0)
+        else if(!firstMove && i==0) 
           valid = false;
         else if(boardManager.getAtPosition(whitePotentialMoves[i][0], whitePotentialMoves[i][1]) != 0)
         {
+          // if the spot one space forward is occupied then it is not valid
           if(i==1)
             valid = false;
           else
             valid = boardManager.checkValid(whitePotentialMoves[i][0], whitePotentialMoves[i][1], whiteCannotAttack, 7);
         }
+        // if the spot is empty
         else if(boardManager.getAtPosition(whitePotentialMoves[i][0], whitePotentialMoves[i][1]) == 0)
         {
+          // then the diagonal positions are not valid 
           if(i==2 || i==3)
             valid = false;
           else
             valid = true;
         }
       }
+      // if the gamepiece is black and the current move is within the range of the board
       else if(!isWhite && blackPotentialMoves[i][0] >= 0 && blackPotentialMoves[i][0] <= 7 && blackPotentialMoves[i][1] >= 0 && blackPotentialMoves[i][1] <= 7)
       {
         if(firstMove && i==0)
@@ -247,8 +254,6 @@ public:
           valid = true;
           if(boardManager.getAtPosition(blackPotentialMoves[i][0], blackPotentialMoves[i][1]) != 0)
             valid = false;
-          // else 
-          //   valid = boardManager.checkValid(blackPotentialMoves[i][0], blackPotentialMoves[i][1], blackCannotAttack, 7);
         }
         else if(!firstMove && i==0)
           valid = false;
@@ -268,8 +273,10 @@ public:
         }
       }
 
+      // if the piece is white and the move is valid add the potential white move
       if(isWhite && valid)
         moves.push_back(Position(whitePotentialMoves[i][0], whitePotentialMoves[i][1]));
+      // else if the piece is black and the move is valid add the potential black move
       else if(!isWhite && valid)
         moves.push_back(Position(blackPotentialMoves[i][0], blackPotentialMoves[i][1]));
     }
@@ -277,6 +284,7 @@ public:
   }
 };
 
+// For the rook gamepiece
 class Rook : public IGamePiece {
 public:
   std::string getName() override {
@@ -297,7 +305,7 @@ public:
                                  {position.x + 1, position.y}, {position.x + 2, position.y}, {position.x + 3, position.y}, {position.x + 4, position.y}, {position.x + 5, position.y}, {position.x + 6, position.y}, {position.x + 7, position.y},
                                  {position.x, position.y+1}, {position.x, position.y+2}, {position.x, position.y+3}, {position.x, position.y+4}, {position.x, position.y+5}, {position.x, position.y+6}, {position.x, position.y+7},
                                  {position.x, position.y-1}, {position.x, position.y-2}, {position.x, position.y-3}, {position.x, position.y-4}, {position.x, position.y-5}, {position.x, position.y-6}, {position.x, position.y-7}};
-
+    // Preventing moves attacking own pieces and king
     std::string whiteCannotAttack[7] = {"White Pawn", "White Knight", "White Bishop", "White Rook", "White King", "White Queen", "Black King"};
     std::string blackCannotAttack[7] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black King", "Black Queen", "White King"};
     bool valid = false;
@@ -337,6 +345,7 @@ public:
   }
 };
 
+// For the knight gamepiece
 class Knight : public IGamePiece {
 public:
   std::string getName() override {
@@ -352,7 +361,7 @@ public:
   }
   virtual std::vector<Position> getPotentialMoves() override {
     std::vector<Position> moves;
-    // King can move one square at any time, in any direction it wants
+    // Knight can only move in "L-shape"
     int potentialMoves[8][2] = {{position.x - 2, position.y + 1}, {position.x - 1, position.y + 2}, {position.x + 1, position.y + 2}, {position.x + 2, position.y + 1},
                                 {position.x - 2, position.y - 1}, {position.x - 1, position.y - 2}, {position.x + 1, position.y - 2}, {position.x + 2, position.y - 1}};
     // Preventing moves attacking own pieces and king
@@ -382,6 +391,7 @@ public:
   }
 };
 
+// For the bishop gamepiece
 class Bishop : public IGamePiece {
 public:
   std::string getName() override {
@@ -397,17 +407,17 @@ public:
   }
   virtual std::vector<Position> getPotentialMoves() override {
     std::vector<Position> moves;
-    // Rook can move as many squares as it likes horizontally or vertically as long as its not blocked by an occupied square
+    // Bishop can move as many squares horizonally or vertically as long as it is not blocked by an occupied square 
     int potentialMoves[28][2] = {{position.x - 1, position.y + 1}, {position.x - 2, position.y + 2}, {position.x - 3, position.y + 3}, {position.x - 4, position.y + 4}, {position.x - 5, position.y + 5}, {position.x - 6, position.y + 6}, {position.x - 7, position.y + 7},
                                  {position.x - 1, position.y - 1}, {position.x - 2, position.y - 2}, {position.x - 3, position.y - 3}, {position.x - 4, position.y - 4}, {position.x - 5, position.y - 5}, {position.x - 6, position.y - 6}, {position.x - 7, position.y - 7},
                                  {position.x + 1, position.y + 1}, {position.x + 2, position.y + 2}, {position.x + 3, position.y + 3}, {position.x + 4, position.y + 4}, {position.x + 5, position.y + 5}, {position.x + 6, position.y + 6}, {position.x + 7, position.y + 7},
                                  {position.x + 1, position.y - 1}, {position.x + 2, position.y - 2}, {position.x + 3, position.y - 3}, {position.x + 4, position.y - 4}, {position.x + 5, position.y - 5}, {position.x + 6, position.y - 6}, {position.x + 7, position.y - 7}};
-
+    // Preventing moves attacking own pieces and king
     std::string whiteCannotAttack[7] = {"White Pawn", "White Knight", "White Bishop", "White Rook", "White King", "White Queen", "Black King"};
     std::string blackCannotAttack[7] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black King", "Black Queen", "White King"};
     bool valid = false;
 
-    // Checking possible positions to the left, right, top, and bottom of the rook horizontally
+    // Checking possible positions to the left, right, top, and bottom of the bishop diagonally
     for(int j = 0; j<4; j++)
     {
       for(int i = 7*j; i<28; i++)
@@ -442,6 +452,7 @@ public:
   }
 };
 
+// For the queen gamepiece
 class Queen : public IGamePiece {
 public:
   std::string getName() override {
@@ -457,7 +468,7 @@ public:
   }
   virtual std::vector<Position> getPotentialMoves() override {
     std::vector<Position> moves;
-    // Rook can move as many squares as it likes horizontally or vertically as long as its not blocked by an occupied square
+    // Queen can move like rook and bishop as long as its not blocked by an occupied square
     int potentialMoves[56][2] = {{position.x - 1, position.y + 1}, {position.x - 2, position.y + 2}, {position.x - 3, position.y + 3}, {position.x - 4, position.y + 4}, {position.x - 5, position.y + 5}, {position.x - 6, position.y + 6}, {position.x - 7, position.y + 7},
                                  {position.x - 1, position.y - 1}, {position.x - 2, position.y - 2}, {position.x - 3, position.y - 3}, {position.x - 4, position.y - 4}, {position.x - 5, position.y - 5}, {position.x - 6, position.y - 6}, {position.x - 7, position.y - 7},
                                  {position.x + 1, position.y + 1}, {position.x + 2, position.y + 2}, {position.x + 3, position.y + 3}, {position.x + 4, position.y + 4}, {position.x + 5, position.y + 5}, {position.x + 6, position.y + 6}, {position.x + 7, position.y + 7},
@@ -466,12 +477,12 @@ public:
                                  {position.x + 1, position.y}, {position.x + 2, position.y}, {position.x + 3, position.y}, {position.x + 4, position.y}, {position.x + 5, position.y}, {position.x + 6, position.y}, {position.x + 7, position.y},
                                  {position.x, position.y+1}, {position.x, position.y+2}, {position.x, position.y+3}, {position.x, position.y+4}, {position.x, position.y+5}, {position.x, position.y+6}, {position.x, position.y+7},
                                  {position.x, position.y-1}, {position.x, position.y-2}, {position.x, position.y-3}, {position.x, position.y-4}, {position.x, position.y-5}, {position.x, position.y-6}, {position.x, position.y-7}};
-
+    // Preventing moves attacking own pieces and king
     std::string whiteCannotAttack[7] = {"White Pawn", "White Knight", "White Bishop", "White Rook", "White King", "White Queen", "Black King"};
     std::string blackCannotAttack[7] = {"Black Pawn", "Black Knight", "Black Bishop", "Black Rook", "Black King", "Black Queen", "White King"};
     bool valid = false;
 
-    // Checking possible positions to the left, right, top, and bottom of the rook horizontally
+    // Checking possible positions to the left, right, top, and bottom of the queen horizontally and diagonally
     for(int j = 0; j<8; j++)
     {
       for(int i = 7*j; i<56; i++)
@@ -506,6 +517,7 @@ public:
   }
 };
 
+// For the king gamepiece
 class King : public IGamePiece {
 public:
   std::string getName() override {
@@ -557,12 +569,7 @@ void BoardManager::prepareBoard() {
   // create an 8x8 chessboard defaulting to null pointers of IGamePiece objects
   board = std::vector<std::vector<IGamePiece *>>(8, std::vector<IGamePiece *>(8, nullptr));
   // TODO add pieces to the board here
-
-  // board[col][row]
   board[0][0] = new Rook();
-  // std::cout << boardManager.getAtPosition(0, 0)->getName() << std::endl; // used to check what piece it is 
-  // std::cout << boardManager.getAtPosition(0, 0) << std::endl; // used to check if a piece is there
-  // std::cout << boardManager.getAtPosition(3, 0) << std::endl; // use to check if a piece is not there
   board[0][0]->isWhite = false;
   board[1][0] = new Knight();
   board[1][0]->isWhite = false;
