@@ -63,6 +63,7 @@ struct Position {
 class IGamePiece {
 public:
   // isWhite is a boolean to track what team the piece belongs to
+  bool firstMove = true;
   bool isWhite = false;
   // position represents the piece coordinates on the game board
   // this position will be updated by main() after every board update
@@ -135,6 +136,10 @@ public:
     for (auto &move : piece->getPotentialMoves()) {
       if (move.x == target.x && move.y == target.y) {
         isValidMove = true;
+        if((piece->getName() == "White Pawn" || piece->getName() == "Black Pawn") && piece->firstMove == true)
+        {
+          piece->firstMove = false;
+        }
         break;
       }
     }
@@ -174,9 +179,17 @@ public:
 static BoardManager boardManager;
 
 class Pawn : public IGamePiece {
-private:
-  bool firstMove = true;
 public:
+  bool getFirstMove()
+  {
+    return firstMove;
+  }
+
+  void setFirstMove(bool b)
+  {
+    firstMove = b;
+  }
+
   std::string getName() override {
     std::string color = isWhite ? "White " : "Black ";
     return color + "Pawn";
@@ -204,15 +217,21 @@ public:
         if(firstMove && i==0)
         {
           valid = true;
+          // if spot is occupied then cannot move there
           if(boardManager.getAtPosition(whitePotentialMoves[i][0], whitePotentialMoves[i][1]) != 0)
-            valid = boardManager.checkValid(whitePotentialMoves[i][0], whitePotentialMoves[i][1], whiteCannotAttack, 7);
-          
-          firstMove = false;
+            valid = false;
+          // else 
+          //   valid = boardManager.checkValid(whitePotentialMoves[i][0], whitePotentialMoves[i][1], whiteCannotAttack, 7);
         }
         else if(!firstMove && i==0)
           valid = false;
         else if(boardManager.getAtPosition(whitePotentialMoves[i][0], whitePotentialMoves[i][1]) != 0)
-          valid = boardManager.checkValid(whitePotentialMoves[i][0], whitePotentialMoves[i][1], whiteCannotAttack, 7);
+        {
+          if(i==1)
+            valid = false;
+          else
+            valid = boardManager.checkValid(whitePotentialMoves[i][0], whitePotentialMoves[i][1], whiteCannotAttack, 7);
+        }
         else if(boardManager.getAtPosition(whitePotentialMoves[i][0], whitePotentialMoves[i][1]) == 0)
         {
           if(i==2 || i==3)
@@ -227,14 +246,19 @@ public:
         {
           valid = true;
           if(boardManager.getAtPosition(blackPotentialMoves[i][0], blackPotentialMoves[i][1]) != 0)
-            valid = boardManager.checkValid(blackPotentialMoves[i][0], blackPotentialMoves[i][1], blackCannotAttack, 7);
-          
-          firstMove = false;
+            valid = false;
+          // else 
+          //   valid = boardManager.checkValid(blackPotentialMoves[i][0], blackPotentialMoves[i][1], blackCannotAttack, 7);
         }
         else if(!firstMove && i==0)
           valid = false;
         else if(boardManager.getAtPosition(blackPotentialMoves[i][0], blackPotentialMoves[i][1]) != 0)
-          valid = boardManager.checkValid(blackPotentialMoves[i][0], blackPotentialMoves[i][1], blackCannotAttack, 7);
+        {
+          if(i==1)
+            valid = false;
+          else
+            valid = boardManager.checkValid(blackPotentialMoves[i][0], blackPotentialMoves[i][1], blackCannotAttack, 7);
+        }
         else if(boardManager.getAtPosition(blackPotentialMoves[i][0], blackPotentialMoves[i][1]) == 0)
         {
           if(i==2 || i==3)
